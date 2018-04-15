@@ -11,9 +11,7 @@ class SVGEditor extends Component {
       orientation: this.getOrientation(),
       selectedIds: [],
       points: [],
-      isEditorFocused: false,
-      scrollX: 0,
-      scrollY: 0
+      isEditorFocused: false
     }
 
     this.resultRef = React.createRef()
@@ -81,7 +79,7 @@ class SVGEditor extends Component {
             dangerouslySetInnerHTML={{__html: this.state.source}}
             onClick={e => this.addPoint(e)}
             ref={this.resultRef}
-            onScroll={() => this.updateResultScroll()}
+            onScroll={() => this.forceUpdate()}
           >
           </div>
           {this.state.points.map(point => {
@@ -272,13 +270,6 @@ class SVGEditor extends Component {
         ? prevState.selectedIds.filter(selectedId => selectedId !== id)
         : prevState.selectedIds.concat([id])
     }))
-  }
-
-  updateResultScroll() {
-    this.setState({
-      scrollX: this.resultRef.current.scrollLeft,
-      scrollY: this.resultRef.current.scrollTop
-    })
   }
 }
 

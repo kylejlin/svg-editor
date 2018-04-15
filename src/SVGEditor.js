@@ -25,13 +25,18 @@ class SVGEditor extends Component {
     })
 
     window.addEventListener('keydown', e => {
-      if (
-        !this.state.isEditorFocused
-        && e.keyCode === 8
-      ) {
-        this.deleteSelectedPoints()
+      if (e.ctrlKey) {
+        if (e.key === 'd' || (e.keyCode === 68 && !e.shiftKey)) {
+          this.deleteSelectedPoints()
+          e.preventDefault()
+        }
+
+        if (e.key === 'D' || (e.keyCode === 68 && e.shiftKey)) {
+          this.deleteAllPoints()
+          e.preventDefault()
+        }
       }
-    })
+    }, { passive: false })
   }
 
   render() {
@@ -132,6 +137,10 @@ class SVGEditor extends Component {
       this.textareaRef.current.selectionStart = selectionStart
       this.textareaRef.current.selectionEnd = selectionStart + polygonSource.length + 1
     })
+  }
+
+  deleteAllPoints() {
+    this.setState({ points: [], selectedIds: [] })
   }
 
   deleteSelectedPoints() {

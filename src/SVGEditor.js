@@ -127,6 +127,10 @@ class SVGEditor extends Component {
 
     this.setState({
       source: newSource
+    }, () => {
+      this.textareaRef.current.focus()
+      this.textareaRef.current.selectionStart = selectionStart
+      this.textareaRef.current.selectionEnd = selectionStart + polygonSource.length + 1
     })
   }
 

@@ -85,14 +85,14 @@ class SVGEditor extends Component {
           {this.state.points.map(point => {
             const renderCoords = this.calculateRenderCoords(point)
             return <div
-              key={point.id}
-              className={'SVGEditor-marker' + (this.state.selectedIds.includes(point.id) ? ' SVGEditor-selected-marker' : '')}
+              key={this.generateId(point)}
+              className={'SVGEditor-marker' + (this.state.selectedIds.includes(this.generateId(point)) ? ' SVGEditor-selected-marker' : '')}
               style={{
                 top: renderCoords.y,
                 left: renderCoords.x
               }}
               onClick={() => {
-                this.togglePointSelection(point.id)
+                this.togglePointSelection(this.generateId(point))
               }}
             ></div>
           })}
@@ -111,14 +111,12 @@ class SVGEditor extends Component {
     const ys = viewBox.height / height
     const x = Math.round((e.clientX - rect.left) * xs)
     const y = Math.round((e.clientY - rect.top) * ys)
-    const id = this.generateId()
 
     this.setState(prevState => ({
-      selectedIds: prevState.selectedIds.concat([id]),
+      selectedIds: prevState.selectedIds.concat([this.generateId({ x, y })]),
       points: prevState.points.concat([{
         x,
-        y,
-        id
+        y
       }])
     }), () => this.updatePoints)
   }
@@ -156,7 +154,7 @@ class SVGEditor extends Component {
       return
     }
 
-    const selectedPoints = this.state.selectedIds.map(id => this.state.points.find(p => p.id === id))
+    const selectedPoints = this.state.selectedIds.map(id => this.state.points.find(p => this.generateId(p) === id))
     const pointsSource = selectedPoints.map(p => p.x + ' ' + p.y).join(' ')
 
     const newSource = source.slice(0, selectionStart) + pointsSource + source.slice(selectionEnd)
@@ -185,7 +183,7 @@ class SVGEditor extends Component {
       return
     }
 
-    const selectedPoints = this.state.selectedIds.map(id => this.state.points.find(p => p.id === id))
+    const selectedPoints = this.state.selectedIds.map(id => this.state.points.find(p => this.generateId(p) === id))
     const pointsSource = selectedPoints.map(p => p.x + ' ' + p.y).join(' ')
     const polygonSource = '<polygon fill="#000" points="' + pointsSource + '" />'
 
@@ -207,7 +205,7 @@ class SVGEditor extends Component {
 
   deleteSelectedPoints() {
     this.setState(prevState => ({
-      points: prevState.points.filter(p => !prevState.selectedIds.includes(p.id)),
+      points: prevState.points.filter(p => !prevState.selectedIds.includes(this.generateId(p))),
       selectedIds: []
     }))
   }
@@ -216,8 +214,8 @@ class SVGEditor extends Component {
     this.setState({ source })
   }
 
-  generateId() {
-    return '' + Math.random()
+  generateId(point) {
+    return point.x + ',' + point.y
   }
 
   getOrientation() {
@@ -251,11 +249,9 @@ class SVGEditor extends Component {
 
     const points = pointCoords.map(coords => {
       const { x, y } = coords
-      const id = this.generateId()
       return {
         x,
-        y,
-        id
+        y
       }
     })
 

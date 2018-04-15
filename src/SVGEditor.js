@@ -75,6 +75,7 @@ class SVGEditor extends Component {
           </div>
           {this.state.points.map(point => {
             return <div
+              key={point.id}
               className={'SVGEditor-marker' + (point.id === this.state.selectedId ? ' SVGEditor-selected-marker' : '')}
               style={{
                 top: point.renderY,

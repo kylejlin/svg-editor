@@ -38,6 +38,12 @@ class SVGEditor extends Component {
 
         if (e.key === 'p' || (e.keyCode === 80 && !e.shiftKey)) {
           this.createPolygon()
+          e.preventDefault()
+        }
+
+        if (e.key === 'o' || (e.keyCode === 79 && !e.shiftKey)) {
+          this.createPoints()
+          e.preventDefault()
         }
       }
     }, { passive: false })
@@ -111,6 +117,35 @@ class SVGEditor extends Component {
         id
       }])
     }), () => this.updatePoints)
+  }
+
+  createPoints() {
+    const { selectionStart, selectionEnd } = this.textareaRef.current
+    const { source } = this.state
+
+    if (!this.state.isEditorFocused) {
+      alert('Textarea not focused.')
+      return
+    }
+
+    if (this.state.selectedIds.length === 0) {
+      alert('No points selected.')
+      return
+    }
+
+    const selectedPoints = this.state.selectedIds.map(id => this.state.points.find(p => p.id === id))
+    const pointsSource = selectedPoints.map(p => p.x + ' ' + p.y).join(' ')
+
+    const newSource = source.slice(0, selectionStart) + pointsSource + source.slice(selectionEnd)
+
+    this.setState({
+      source: newSource
+    }, () => {
+      window.setTimeout(() => {
+        this.textareaRef.current.focus()
+        this.textareaRef.current.setSelectionRange(selectionStart, selectionStart + pointsSource.length + 1)
+      }, 0)
+    })
   }
 
   createPolygon() {

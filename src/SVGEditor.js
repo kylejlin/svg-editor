@@ -9,12 +9,13 @@ class SVGEditor extends Component {
     this.state = {
       source: svgStarterSource,
       orientation: this.getOrientation(),
-      selectedId: null,
+      selectedIds: [],
       points: [],
       isEditorFocused: false
     }
 
     this.resultRef = React.createRef()
+    this.textareaRef = React.createRef()
 
     window.addEventListener('resize', () => {
       this.setState({
@@ -28,31 +29,17 @@ class SVGEditor extends Component {
         !this.state.isEditorFocused
         && e.keyCode === 8
       ) {
-        this.setState(prevState => ({
-          points: prevState.points.filter(p => p.id !== prevState.selectedId)
-        }))
+        this.deleteSelectedPoints()
       }
     })
   }
 
   render() {
-    const point = this.state.points.find(p => p.id === this.state.selectedId)
-    const coords = point === undefined
-      ? null
-      : {
-        x: point.x,
-        y: point.y
-      }
-
     return (
       <div className="SVGEditor">
         <div className="SVGEditor-top">
           <h2>SVG Editor</h2>
-          <div className="SVGEditor-coord-display">
-            {coords &&
-              coords.x + ', ' + coords.y
-            }
-          </div>
+          <div className="SVGEditor-tool SVGEditor-tool-poly" onClick={() => this.createPolygon()}>Poly</div>
         </div>
 
         <div className={'SVGEditor-middle SVGEditor-middle-' + this.state.orientation}>
@@ -63,6 +50,7 @@ class SVGEditor extends Component {
               value={this.state.source}
               onFocus={() => this.setState({ isEditorFocused: true })}
               onBlur={() => this.setState({ isEditorFocused: false })}
+              ref={this.textareaRef}
             >
             </textarea>
           </div>
@@ -76,34 +64,19 @@ class SVGEditor extends Component {
           {this.state.points.map(point => {
             return <div
               key={point.id}
-              className={'SVGEditor-marker' + (point.id === this.state.selectedId ? ' SVGEditor-selected-marker' : '')}
+              className={'SVGEditor-marker' + (this.state.selectedIds.includes(point.id) ? ' SVGEditor-selected-marker' : '')}
               style={{
                 top: point.renderY,
                 left: point.renderX
               }}
               onClick={() => {
-                this.updateSelectedId(point.id)
+                this.togglePointSelection(point.id)
               }}
             ></div>
           })}
         </div>
       </div>
     )
-  }
-
-  editSource(source) {
-    this.setState({ source })
-  }
-
-  generateId() {
-    return '' + Math.random()
-  }
-
-  getOrientation() {
-    if (window.innerWidth > window.innerHeight) {
-      return 'landscape'
-    }
-    return 'portrait'
   }
 
   addPoint(e) {
@@ -121,7 +94,7 @@ class SVGEditor extends Component {
     const id = this.generateId()
 
     this.setState(prevState => ({
-      selectedId: id,
+      selectedIds: prevState.selectedIds.concat([id]),
       points: prevState.points.concat([{
         x,
         y,
@@ -132,10 +105,59 @@ class SVGEditor extends Component {
     }), () => this.updatePoints)
   }
 
-  updateSelectedId(id) {
+  createPolygon() {
+    const { selectionStart, selectionEnd } = this.textareaRef.current
+    const { source } = this.state
+
+    if (selectionStart === source.length) {
+      alert('Textarea not focused.')
+      return
+    }
+
+    if (this.state.selectedIds.length < 3) {
+      alert('You need at least 3 points to make a polygon.')
+      return
+    }
+
+    const selectedPoints = this.state.selectedIds.map(id => this.state.points.find(p => p.id === id))
+    const pointsSource = selectedPoints.map(p => p.x + ' ' + p.y).join(' ')
+    const polygonSource = '<polygon fill="#000" points="' + pointsSource + '" />'
+
+    const newSource = source.slice(0, selectionStart) + polygonSource + source.slice(selectionEnd)
+
     this.setState({
-      selectedId: id
+      source: newSource
     })
+  }
+
+  deleteSelectedPoints() {
+    this.setState(prevState => ({
+      points: prevState.points.filter(p => !prevState.selectedIds.includes(p.id)),
+      selectedIds: []
+    }))
+  }
+
+  editSource(source) {
+    this.setState({ source })
+  }
+
+  generateId() {
+    return '' + Math.random()
+  }
+
+  getOrientation() {
+    if (window.innerWidth > window.innerHeight) {
+      return 'landscape'
+    }
+    return 'portrait'
+  }
+
+  togglePointSelection(id) {
+    this.setState(prevState => ({
+      selectedIds: prevState.selectedIds.includes(id)
+        ? prevState.selectedIds.filter(selectedId => selectedId !== id)
+        : prevState.selectedIds.concat([id])
+    }))
   }
 }
 

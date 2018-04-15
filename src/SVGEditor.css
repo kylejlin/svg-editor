@@ -15,20 +15,25 @@
   font-size: 5vh;
 }
 
-.SVGEditor-coord-display {
+.SVGEditor-top .SVGEditor-tool {
   background-color: var(--blue);
   color: var(--white);
 
   position: absolute;
   top: 0;
-  right: 0;
 
-  width: 10vh;
   height: 10vh;
 
-  font-size: 3vh;
+  font-size: 2.5vh;
+  line-height: 10vh;
+  text-align: center;
 
-  padding: 1vh;
+  padding: 0 1vh 0 1vh;
+}
+
+.SVGEditor-top .SVGEditor-tool-poly {
+  right: 0;
+  width: 10vw;
 }
 
 .SVGEditor-middle {

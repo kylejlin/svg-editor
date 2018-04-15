@@ -11,7 +11,9 @@ class SVGEditor extends Component {
       orientation: this.getOrientation(),
       selectedIds: [],
       points: [],
-      isEditorFocused: false
+      isEditorFocused: false,
+      scrollX: 0,
+      scrollY: 0
     }
 
     this.resultRef = React.createRef()
@@ -19,9 +21,10 @@ class SVGEditor extends Component {
 
     window.addEventListener('resize', () => {
       this.setState({
-        orientation: this.getOrientation(),
-        points: []
+        orientation: this.getOrientation()
       })
+      // Redraw points
+      this.forceUpdate()
     })
 
     window.addEventListener('keydown', e => {
@@ -43,6 +46,11 @@ class SVGEditor extends Component {
 
         if (e.key === 'o' || (e.keyCode === 79 && !e.shiftKey)) {
           this.createPoints()
+          e.preventDefault()
+        }
+
+        if (e.key === 'O' || (e.keyCode === 79 && e.shiftKey)) {
+          this.renderPoints()
           e.preventDefault()
         }
       }
@@ -73,15 +81,17 @@ class SVGEditor extends Component {
             dangerouslySetInnerHTML={{__html: this.state.source}}
             onClick={e => this.addPoint(e)}
             ref={this.resultRef}
+            onScroll={() => this.updateResultScroll()}
           >
           </div>
           {this.state.points.map(point => {
+            const renderCoords = this.calculateRenderCoords(point)
             return <div
               key={point.id}
               className={'SVGEditor-marker' + (this.state.selectedIds.includes(point.id) ? ' SVGEditor-selected-marker' : '')}
               style={{
-                top: point.renderY,
-                left: point.renderX
+                top: renderCoords.y,
+                left: renderCoords.x
               }}
               onClick={() => {
                 this.togglePointSelection(point.id)
@@ -103,8 +113,6 @@ class SVGEditor extends Component {
     const ys = viewBox.height / height
     const x = Math.round((e.clientX - rect.left) * xs)
     const y = Math.round((e.clientY - rect.top) * ys)
-    const renderX = e.clientX
-    const renderY = e.clientY
     const id = this.generateId()
 
     this.setState(prevState => ({
@@ -112,11 +120,28 @@ class SVGEditor extends Component {
       points: prevState.points.concat([{
         x,
         y,
-        renderX,
-        renderY,
         id
       }])
     }), () => this.updatePoints)
+  }
+
+  calculateRenderCoords(localCoords) {
+    const { x, y } = localCoords
+    const container = this.resultRef.current
+    const svg = container.children[0]
+    const viewBox = svg.viewBox.baseVal
+    const boundingClientRect = svg.getBoundingClientRect()
+    const svgWidth = boundingClientRect.right - boundingClientRect.left
+    const svgHeight = boundingClientRect.bottom - boundingClientRect.top
+    const xScale = viewBox.width / svgWidth
+    const yScale = viewBox.height / svgHeight
+    const renderX = (x / xScale) + boundingClientRect.left
+    const renderY = (y / yScale) + boundingClientRect.top
+
+    return {
+      x: renderX,
+      y: renderY
+    }
   }
 
   createPoints() {
@@ -204,12 +229,56 @@ class SVGEditor extends Component {
     return 'portrait'
   }
 
+  renderPoints() {
+    const { selectionStart, selectionEnd } = this.textareaRef.current
+    const { source } = this.state
+
+    if (!this.state.isEditorFocused) {
+      alert('Textarea not focused.')
+      return
+    }
+
+    const pointsSource = source.slice(selectionStart, selectionEnd)
+    const pointComponents = pointsSource.split(/[^\-.\d]/g)
+    const pointCoords = pointComponents.reduce((coords, component) => {
+      const last = coords[coords.length - 1]
+      if (coords.length === 0 || ('y' in last)) {
+        return coords.concat([{ x: +component }])
+      }
+      return coords.slice(0, -1).concat([{
+        x: last.x,
+        y: +component
+      }])
+    }, [])
+
+    const points = pointCoords.map(coords => {
+      const { x, y } = coords
+      const id = this.generateId()
+      return {
+        x,
+        y,
+        id
+      }
+    })
+
+    this.setState(prevState => ({
+      points: prevState.points.concat(points)
+    }))
+  }
+
   togglePointSelection(id) {
     this.setState(prevState => ({
       selectedIds: prevState.selectedIds.includes(id)
         ? prevState.selectedIds.filter(selectedId => selectedId !== id)
         : prevState.selectedIds.concat([id])
     }))
+  }
+
+  updateResultScroll() {
+    this.setState({
+      scrollX: this.resultRef.current.scrollLeft,
+      scrollY: this.resultRef.current.scrollTop
+    })
   }
 }
 

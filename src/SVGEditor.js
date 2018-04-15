@@ -35,6 +35,10 @@ class SVGEditor extends Component {
           this.deleteAllPoints()
           e.preventDefault()
         }
+
+        if (e.key === 'p' || (e.keyCode === 80 && !e.shiftKey)) {
+          this.createPolygon()
+        }
       }
     }, { passive: false })
   }
@@ -44,7 +48,6 @@ class SVGEditor extends Component {
       <div className="SVGEditor">
         <div className="SVGEditor-top">
           <h2>SVG Editor</h2>
-          <div className="SVGEditor-tool SVGEditor-tool-poly" onClick={() => this.createPolygon()}>Poly</div>
         </div>
 
         <div className={'SVGEditor-middle SVGEditor-middle-' + this.state.orientation}>
@@ -114,7 +117,7 @@ class SVGEditor extends Component {
     const { selectionStart, selectionEnd } = this.textareaRef.current
     const { source } = this.state
 
-    if (selectionStart === source.length) {
+    if (!this.state.isEditorFocused) {
       alert('Textarea not focused.')
       return
     }
@@ -133,9 +136,10 @@ class SVGEditor extends Component {
     this.setState({
       source: newSource
     }, () => {
-      this.textareaRef.current.focus()
-      this.textareaRef.current.selectionStart = selectionStart
-      this.textareaRef.current.selectionEnd = selectionStart + polygonSource.length + 1
+      window.setTimeout(() => {
+        this.textareaRef.current.focus()
+        this.textareaRef.current.setSelectionRange(selectionStart, selectionStart + polygonSource.length + 1)
+      }, 0)
     })
   }
 

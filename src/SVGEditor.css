@@ -126,6 +126,7 @@
   width: 5px;
   height: 5px;
   border-radius: 5px;
+  transform: translate(-50%, -50%);
   background-color: var(--marker-color);
 }
 .SVGEditor-marker.SVGEditor-selected-marker {

@@ -61,6 +61,10 @@ class SVGEditor extends Component {
           this.unselectPoints()
           e.preventDefault()
         }
+
+        if (e.key === 'h' || (e.keyCode === 72 && !e.shiftKey)) {
+          this.openColorSelector()
+        }
       }
     }, { passive: false })
   }
@@ -233,6 +237,31 @@ class SVGEditor extends Component {
       return 'landscape'
     }
     return 'portrait'
+  }
+
+  openColorSelector() {
+    const { selectionStart, selectionEnd } = this.textareaRef.current
+    const { source } = this.state
+
+    if (!this.state.isEditorFocused) {
+      alert('Textarea not focused.')
+      return
+    }
+
+    const colorSource = source.slice(selectionStart, selectionEnd)
+    const sanitizedSource = colorSource.length === 7
+      ? colorSource
+      : '#' + colorSource.charAt(1).repeat(2) + colorSource.charAt(2).repeat(2) + colorSource.charAt(3).repeat(2)
+    const colorInput = document.createElement('input')
+    colorInput.type = 'color'
+    colorInput.value = sanitizedSource
+    colorInput.click()
+    colorInput.addEventListener('change', () => {
+      const newColorSource = colorInput.value
+      this.setState({
+        source: source.slice(0, selectionStart) + newColorSource + source.slice(selectionEnd)
+      })
+    })
   }
 
   renderPoints() {

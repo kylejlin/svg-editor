@@ -51,6 +51,16 @@ class SVGEditor extends Component {
           this.renderPoints()
           e.preventDefault()
         }
+
+        if (e.key === 's' || (e.keyCode === 83 && !e.shiftKey)) {
+          this.selectPoints()
+          e.preventDefault()
+        }
+
+        if (e.key === 'S' || (e.keyCode === 83 && e.shiftKey)) {
+          this.unselectPoints()
+          e.preventDefault()
+        }
       }
     }, { passive: false })
   }
@@ -260,11 +270,67 @@ class SVGEditor extends Component {
     }))
   }
 
+  selectPoints() {
+    const { selectionStart, selectionEnd } = this.textareaRef.current
+    const { source } = this.state
+
+    if (!this.state.isEditorFocused) {
+      alert('Textarea not focused.')
+      return
+    }
+
+    const pointsSource = source.slice(selectionStart, selectionEnd)
+    const pointComponents = pointsSource.split(/[^\-.\d]/g)
+    const pointCoords = pointComponents.reduce((coords, component) => {
+      const last = coords[coords.length - 1]
+      if (coords.length === 0 || ('y' in last)) {
+        return coords.concat([{ x: +component }])
+      }
+      return coords.slice(0, -1).concat([{
+        x: last.x,
+        y: +component
+      }])
+    }, [])
+
+    const ids = pointCoords.map(coords => this.generateId(coords))
+    this.setState(prevState => ({
+      selectedIds: prevState.selectedIds.concat(ids)
+    }))
+  }
+
   togglePointSelection(id) {
     this.setState(prevState => ({
       selectedIds: prevState.selectedIds.includes(id)
         ? prevState.selectedIds.filter(selectedId => selectedId !== id)
         : prevState.selectedIds.concat([id])
+    }))
+  }
+
+  unselectPoints() {
+    const { selectionStart, selectionEnd } = this.textareaRef.current
+    const { source } = this.state
+
+    if (!this.state.isEditorFocused) {
+      alert('Textarea not focused.')
+      return
+    }
+
+    const pointsSource = source.slice(selectionStart, selectionEnd)
+    const pointComponents = pointsSource.split(/[^\-.\d]/g)
+    const pointCoords = pointComponents.reduce((coords, component) => {
+      const last = coords[coords.length - 1]
+      if (coords.length === 0 || ('y' in last)) {
+        return coords.concat([{ x: +component }])
+      }
+      return coords.slice(0, -1).concat([{
+        x: last.x,
+        y: +component
+      }])
+    }, [])
+
+    const ids = pointCoords.map(coords => this.generateId(coords))
+    this.setState(prevState => ({
+      selectedIds: prevState.selectedIds.filter(id => !ids.includes(id))
     }))
   }
 }

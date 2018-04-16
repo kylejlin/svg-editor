@@ -1,5 +1,5 @@
 # SVGEditor
-An SVG Editor I threw together in a pinch
+An SVG Editor I threw together in a pinch.
 
 This project is not being maintained. Use at your own risk.
 
